@@ -1,115 +1,92 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import YourBotArmy from "./YourBotArmy";
 import BotCollection from "./BotCollection";
-import BotSpecs from "./BotSpecs";
 
-function BotsPage({
-  filteredCollection,
-  botArmy,
-  botSpecs,
-  collectionVisible,
-}) {
-  //start here with your code for step one
+function BotsPage() {
+  // State for all available bots
+  const [bots, setBots] = useState([]);
 
-  const state = {
-    botCollection: [],
-    filteredCollection: [],
-    botArmy: [],
-    collectionVisible: true,
-    botSpecs: {},
-  }
+  //State for bots in my army
+  const [enlistedBots, setEnlistedBots] = useState([]);
 
-  function componentDidMount() {
-    fetch(" http://localhost:8002/bots")
+
+  // Fetches bots from API
+  useEffect(() => {
+    fetch("http://localhost:8002/bots")
       .then((response) => response.json())
-      .then((bots) =>
-        this.setState({ botCollection: bots, filteredCollection: bots })
-      )
-      .then(console.log("Bots loaded"));
-  }
+      .then((bots) => {
+        setBots(bots);
+      });
+  }, []);
 
-  const addToArmy = (bot) => {
-    const newCollection = this.state.filteredCollection.filter(
-      (card) => card.bot_class !== bot.bot_class
-    );
-    this.setState({
-      filtereCollection: newCollection,
-      botArmy: [...this.state.botArmy, bot],
-      collectionVisible: true,
-    });
+  // Enlists bots in army
+  const enlistBot = (bot) => {
+    
+    // checking if bot is already enlisted
+    if (!enlistedBots.some((enlistedBot) => enlistedBot.id === bot.id)) {
+
+      // Add a bot
+      setEnlistedBots((prevEnlistedBots) => [
+        ...prevEnlistedBots,
+        {
+          id: bot.id,
+          name: bot.name,
+          health: bot.health,
+          damage: bot.damage,
+          armor: bot.armor,
+          bot_class: bot.bot_class,
+          catchphrase: bot.catchphrase,
+          avatar_url: bot.avatar_url,
+        },
+      ]);
+    }
   };
-  const removeFromArmy = (bot) => {
-    const newArmy = this.state.botArmy.filter((card) => card.id !== bot.id);
-    const armyClasses = newArmy.map((bot) => bot.bot_class);
-    const newCollection = this.state.botCollection.filter((bot) => {
-      console.log("Filter: ", !armyClasses.include(bot.bot_class));
-      return !armyClasses.include(bot.bot_class);
-    });
-    console.log("newCollection: ", newCollection);
 
-    this.setState({ botArmy: newArmy, filteredCollection: newCollection });
+
+  //Remove bot from army
+  const removeFromArmy = (botId) => {
+
+    //Filters bots
+    setEnlistedBots((prevEnlistedBots) =>
+      prevEnlistedBots.filter((bot) => bot.id !== botId)
+    );
   };
 
-  const removeBotPermanently = (bot) => {
-    let newCollection = this.state.botCollection.filter((card) => card !== bot);
-    let newFilteredCollection = this.state.filteredCollection.filter(
-      (card) => card !== bot
-    );
-    let newArmy = this.state.botArmy.filter((card) => card !== bot);
-
-    this.setState({
-      botCollection: newCollection,
-      filteredCollection: newFilteredCollection,
-      botArmy: newArmy,
-    });
-    fetch(`http://localhost:8002/bots/${bot.id}`, {
+  const releaseBot = (botId) => {
+    // This deletes the bot from the API backend
+    fetch(`http://localhost:8002/bots/${botId}`, {
       method: "DELETE",
     })
-      .then((response) => response.json)
-      .then((result) => console.log(result));
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to delete bot from the backend");
+        }
+      })
+    
+      // .catch((error) => {
+      //   console.error(error);
+      // });
+
+    // Release the bot from the army
+    removeFromArmy(botId);
   };
 
-  const displayBotsSpecs = (bot) => {
-    this.setState({ collectionVisible: false, botSpecs: bot });
-  };
 
-  const displayBotCollections = () => {
-    this.setState({ collectionVisible: true });
-  };
-
+  // BotsPage format
   return (
-    <div>
+    
+    <div style={{ fontFamily: "Arial, sans-serif", textAlign: "center" }}>
+      <h1>Bot Army</h1>
       <YourBotArmy
-        bots={botArmy}
-        action={this.removeFromArmy}
-        removeCard={this.removeBotPermanently}
+        enlistedBots={enlistedBots}
+        removeFromArmy={removeFromArmy}
+        releaseBot={releaseBot}
       />
-      {collectionVisible ? (
-        <BotCollection
-          botCollection={filteredCollection}
-          action={this.displayBotSpecs}
-          removeCard={this.removeBotPermanently}
-        />
-      ) : (
-        <BotSpecs
-          bot={botSpecs}
-          back={this.displayBotCollection}
-          enlist={this.addToArmy}
-        />
-      )}
-    </div>
+      <BotCollection bots={bots} enlistBot={enlistBot} />
+      <p style={{ marginTop: "20px", fontStyle: "italic" }}>
+      </p>
+      </div>
   );
 }
 
-// function BotsPage() {
-//   //start here with your code for step one
-
-//   return (
-//     <div>
-//       <YourBotArmy />
-//       <BotCollection />
-//     </div>
-//   )
-// }
-
-export default BotsPage;
+export default BotsPage;

@@ -1,36 +1,59 @@
 import React from "react";
-import BotCard from "./BotCard";
 
-function YourBotArmy(props) {
-  const displayBots = props.bots.map((bot) => {
-    return (
-      <BotCard bot={bot} action={props.action} removeCard={props.removeCard} />
-    );
-  });
+function YourBotArmy({ enlistedBots, removeFromArmy, releaseBot }) {
+
+
+  // Handle releasing of bots
+  const handleRelease = (botId) => {
+   
+    if (releaseBot) {
+      releaseBot(botId);
+    } else if (removeFromArmy) {
+      removeFromArmy(botId);
+    }
+  };
+
   return (
-        <div className="ui segment inverted olive bot-army">
-          <div className="ui five column grid">
-            <div className="row bot-army-row">
-              {displayBots}
-              Your Bot Army
-            </div>
-          </div>
-        </div>
-      );
-}
-// function YourBotArmy() {
-//   //your bot army code here...
+    <div className="ui segment inverted olive bot-army">
+      <div className="ui five column grid">
+        <div className="row bot-army-row">
+          <h3 style={{color : "black"}}>Your Selected Bot Army</h3>
+          {enlistedBots.map((bot) => (
+            <div key={bot.id} className="ui card">
+              <div className="image" onClick={() => removeFromArmy(bot.id)}>
+                {/* Clicking the image removes the bot from the army */}
 
-//   return (
-//     <div className="ui segment inverted olive bot-army">
-//       <div className="ui five column grid">
-//         <div className="row bot-army-row">
-//           {/*...and here...*/}
-//           Your Bot Army
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+                <img src={bot.avatar_url} alt={`${bot.name} Avatar`} />
+              </div>
+              <div className="content">
+                <div className="header">{bot.name}</div>
+                <div className="meta">
+                  <span className="category">{bot.bot_class}</span>
+                </div>
+                <div className="description">
+                  <p>ID: {bot.id}</p>
+                  <p>Health: {bot.health}</p>
+                  <p>Damage: {bot.damage}</p>
+                  <p>Armor: {bot.armor}</p>
+                  <p>Catchphrase: {bot.catchphrase}</p>
+                </div>
+              </div>
+
+              {/* Clicking on delete button deletes the bot from the army */}
+              {releaseBot && (
+                <button
+                  className="ui red button"
+                  onClick={() => handleRelease(bot.id)}
+                >
+                  Delete Bot 
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default YourBotArmy;
